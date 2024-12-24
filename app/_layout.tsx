@@ -3,10 +3,10 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
+import { useEffect, useState } from 'react';
+import Splash from "./splash"
 import { useColorScheme } from '@/components/useColorScheme';
+import { ActivityIndicator, View } from 'react-native';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -14,12 +14,12 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
+  // Set splash as the default initial route.
   initialRouteName: '(tabs)',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+// SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -27,19 +27,31 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  const [isSplashVisible, setIsSplashVisible] = useState(true); // Control custom splash screen visibility
+
   useEffect(() => {
+    // Handle font loading errors
     if (error) throw error;
-  }, [error]);
 
-  useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      setTimeout(() => {
+        SplashScreen.hideAsync(); // Hide the Expo splash screen
+        setIsSplashVisible(false); // Hide custom splash after delay
+      }, 3000); // 3-second delay for custom splash screen
     }
-  }, [loaded]);
+  }, [loaded, error]);
 
+  
   if (!loaded) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
+
+  if (isSplashVisible) {
+    return <Splash />; // Render your custom splash screen
   }
 
   return <RootLayoutNav />;
@@ -51,8 +63,9 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        <Stack.Screen name="details" options={{ title: 'Details' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        {/* <Stack.Screen name="splash" options={{ headerShown: false }} /> */}
       </Stack>
     </ThemeProvider>
   );
